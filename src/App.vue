@@ -1,9 +1,9 @@
 <template>
   <div id="app">
-    Lunie requires nodes to provide the Cosmos SDK REST API to read the chain state. The API needs to be available via https.
-    <br />Lunie requires a Tendermint Websocket connection to react to on chain events (like a new block). The websocket needs to be available via wss.
-    <br />On this page you can test the 2 endpoints.
-    <br />
+    <h1>Lunie Cosmos SDK Node Tester</h1>
+    <p>Lunie requires nodes to provide the Cosmos SDK REST API to read the chain state. The API needs to be available via https.</p>
+    <p>Lunie requires a Tendermint Websocket connection to react to on chain events (like a new block). The websocket needs to be available via wss.</p>
+    <p>On this page you can test the 2 endpoints.</p>
     <input v-model="restURL" placeholder="enter REST Url..." />
     <br />
     <input v-model="tendermintUrl" placeholder="enter Tendermint Url..." />
