@@ -8,7 +8,7 @@
     <br />
     <input v-model="tendermintUrl" placeholder="enter Tendermint Url..." />
     <br />
-    <button @click="check" :disabled="loading">Test Urls</button>
+    <button @click="check" :disabled="loading">{{ loading ? 'Wait while testing' : 'Test Urls' }}</button>
     <br />
     <span class="line success" v-for="success in successes" :key="success">{{success}}</span>
     <span class="line error" v-for="error in errors" :key="error">{{error}}</span>
@@ -55,18 +55,27 @@ export default {
       const tendermint = Tendermint()
 
       await Promise.all([
-        tendermint
-          .connect(this.tendermintUrl)
-          .then(connectedClient => {
-            this.successes.push(`✔️ Tendermint Websocket reachable`)
-            connectedClient.subscribe({ query: "tm.event='NewBlock'" }, event => {
-              this.successes.push(`✔️ Received Block`)
-              tendermint.disconnect()
+        new Promise((resolve, reject) => {
+          tendermint
+            .connect(this.tendermintUrl)
+            .then(connectedClient => {
+              this.successes.push(`✔️ Tendermint Websocket reachable`)
+
+              const timeout = setTimeout(() => {
+                reject(new Error(`❌ Timed out waiting for block on Tendermint`))
+              }, 10000)
+
+              connectedClient.subscribe({ query: "tm.event='NewBlock'" }, event => {
+                clearTimeout(timeout)
+                this.successes.push(`✔️ Received Block`)
+                tendermint.disconnect()
+                resolve()
+              })
             })
-          })
-          .catch(error => {
-            this.errors.push(`❌ Tendermint Websocket not reachable: ${error}`)
-          }),
+            .catch(error => {
+              this.errors.push(`❌ Tendermint Websocket not reachable: ${error}`)
+            })
+        }),
         Promise.all(sdkRoutes.map(route => {
           return fetch(`${this.restURL.trim('/')}${route}`)
             .then(res => {
