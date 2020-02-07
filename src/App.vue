@@ -16,11 +16,12 @@
 </template>
 
 <script>
+import Tendermint from './tendermint'
 export default {
   name: 'App',
   data: () => ({
-    restURL: undefined,
-    tendermintUrl: undefined,
+    restURL: 'https://cosmos-hub-3.lunie.io/',
+    tendermintUrl: 'wss://cosmos-hub-3.lunie.io/websocket',
     errors: [],
     successes: [],
     loading: false
@@ -51,14 +52,17 @@ export default {
         `/txs?tx.height=1`
       ]
 
+      const tendermint = Tendermint()
+
       await Promise.all([
-        new Promise((resolve, reject) => {
-          const socket = new WebSocket(this.tendermintUrl)
-          socket.onopen = resolve
-          socket.onclose = reject
-        })
-          .then(() => {
+        tendermint
+          .connect(this.tendermintUrl)
+          .then(connectedClient => {
             this.successes.push(`✔️ Tendermint Websocket reachable`)
+            connectedClient.subscribe({ query: "tm.event='NewBlock'" }, event => {
+              this.successes.push(`✔️ Received Block`)
+              tendermint.disconnect()
+            })
           })
           .catch(error => {
             this.errors.push(`❌ Tendermint Websocket not reachable: ${error}`)
