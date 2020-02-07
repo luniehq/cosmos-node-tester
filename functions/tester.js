@@ -1,4 +1,4 @@
-import Tendermint from './tendermint'
+import Tendermint from '../src/tendermint'
 
 // functions/hello.js
 exports.handler = async event => {
