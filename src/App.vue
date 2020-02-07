@@ -10,58 +10,79 @@
     <br />
     <button @click="check" :disabled="loading">Test Urls</button>
     <br />
-    <span v-if="success">The provided endpoints are compatible to be used by Lunie</span>
-    <br />
-    <span v-if="restError">Cosmos SDK REST API is not reachable: {{ restError }}</span>
-    <br />
-    <span v-if="tendermintError">Tendermint Websockets are not reachable: {{ tendermintError }}</span>
+    <span class="line success" v-for="success in successes" :key="success">{{success}}</span>
+    <span class="line error" v-for="error in errors" :key="error">{{error}}</span>
   </div>
 </template>
 
 <script>
 export default {
-  name: "App",
+  name: 'App',
   data: () => ({
     restURL: undefined,
     tendermintUrl: undefined,
-    tendermintError: false,
-    restError: false,
-    success: false,
+    errors: [],
+    successes: [],
     loading: false
   }),
   methods: {
-    async check() {
-      this.tendermintError = undefined;
-      this.restError = undefined;
-      this.success = false;
+    async check () {
+      this.errors = []
+      this.successes = []
+      this.loading = true
 
-      this.loading = true;
+      const sdkRoutes = [
+        `/staking/parameters`,
+        `/slashing/parameters`,
+        `/slashing/validators/cosmos1/signing_info`,
+        `/validatorsets/latest`,
+        `/staking/validators`,
+        `/gov/proposals`,
+        `/staking/pool`,
+        `/gov/parameters/deposit`,
+        `/gov/parameters/tallying`,
+        `/bank/balances/cosmos1`,
+        `/auth/accounts/cosmos1`,
+        `/staking/delegators/cosmos1/delegations`,
+        `/staking/delegators/cosmos1/unbonding_delegations`,
+        `/staking/redelegations`,
+        `/minting/annual-provisions`,
+        `/distribution/delegators/cosmos1/rewards`,
+        `/txs?tx.height=1`
+      ]
 
-      const responses = await Promise.all([
+      await Promise.all([
         new Promise((resolve, reject) => {
-          const socket = new WebSocket(this.tendermintUrl);
-          socket.onopen = resolve;
-          socket.onclose = reject;
+          const socket = new WebSocket(this.tendermintUrl)
+          socket.onopen = resolve
+          socket.onclose = reject
         })
-          .then(() => true)
-          .catch(error => {
-            this.tendermintError = error;
-            return false;
-          }),
-        fetch(`${this.restURL.trim("/")}/staking/validators`)
-          .then(res => res.json())
-          .then(() => true)
-          .catch(error => {
-            this.restError = error;
-            return false;
+          .then(() => {
+            this.successes.push(`✔️ Tendermint Websocket reachable`)
           })
-      ]);
+          .catch(error => {
+            this.errors.push(`❌ Tendermint Websocket not reachable: ${error}`)
+          }),
+        Promise.all(sdkRoutes.map(route => {
+          return fetch(`${this.restURL.trim('/')}${route}`)
+            .then(res => {
+              if (res.status === 404) {
+                this.errors.push(`❌ Route ${route} not available`)
+              } else {
+                this.successes.push(`✔️ Route ${route} is reachable`)
+              }
+            })
+        }))
+
+      ])
+
+      this.loading = false
 
       // success if non failed
-      this.success = responses[0] && responses[1];
+      this.success = this.errors.length === 0
     }
   }
-};
+}
 </script>
 
 <style>
@@ -72,5 +93,10 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.line {
+  display: block;
+  text-align: left;
 }
 </style>
