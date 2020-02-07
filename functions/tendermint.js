@@ -16,7 +16,7 @@ const camel = require(`camelcase`)
 
 const connectionTimeoutInterval = 5000
 
-export default function tendermintConnect () {
+module.exports = function tendermintConnect () {
   const client = {
     socket: undefined,
     subscriptions: [],
