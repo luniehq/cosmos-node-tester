@@ -1,4 +1,4 @@
-import Tendermint from '../src/tendermint'
+const Tendermint = require('../src/tendermint')
 
 // functions/hello.js
 exports.handler = async event => {
