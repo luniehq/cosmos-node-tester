@@ -85,6 +85,9 @@ export default {
                 this.successes.push(`✔️ Route ${route} is reachable`)
               }
             })
+            .catch(() => {
+              this.errors.push(`❌ Route ${route} not available`)
+            })
         }))
 
       ])
