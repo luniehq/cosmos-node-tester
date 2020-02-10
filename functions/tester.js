@@ -8,9 +8,9 @@ exports.handler = async event => {
   if (!api || !rpc) {
     return {
       statusCode: 200,
-      body: {
+      body: JSON.stringify({
         errors: ['You need to provide rpc and api query parameters']
-      }
+      })
     }
   }
 
@@ -18,10 +18,10 @@ exports.handler = async event => {
 
   return {
     statusCode: 200,
-    body: {
+    body: JSON.stringify({
       errors,
       successes
-    }
+    })
   }
 }
 
