@@ -1,4 +1,5 @@
 const Tendermint = require('./tendermint')
+const fetch = require('node-fetch')
 
 // functions/hello.js
 exports.handler = async event => {
