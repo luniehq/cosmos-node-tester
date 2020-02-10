@@ -1,4 +1,4 @@
-const Tendermint = require('./tendermint')
+// const Tendermint = require('./tendermint')
 
 // functions/hello.js
 exports.handler = async event => {
@@ -49,40 +49,40 @@ async function check (tendermintUrl, cosmosAPIUrl) {
   const errors = []
   const successes = []
 
-  const tendermint = Tendermint()
+  //   const tendermint = Tendermint()
 
   await Promise.all([
-    new Promise((resolve, reject) => {
-      tendermint
-        .connect(tendermintUrl)
-        .then(connectedClient => {
-          successes.push(`✅ Tendermint websocket reachable`)
+    // new Promise((resolve, reject) => {
+    //   tendermint
+    //     .connect(tendermintUrl)
+    //     .then(connectedClient => {
+    //       successes.push(`✅ Tendermint websocket reachable`)
 
-          const timeout = setTimeout(() => {
-            reject(
-              new Error(`❌ Timed out waiting for websocket on Tendermint`)
-            )
-          }, 10000)
+    //       const timeout = setTimeout(() => {
+    //         reject(
+    //           new Error(`❌ Timed out waiting for websocket on Tendermint`)
+    //         )
+    //       }, 10000)
 
-          connectedClient.subscribe(
-            { query: "tm.event='NewBlock'" },
-            event => {
-              clearTimeout(timeout)
-              successes.push(
-                `✅ Received new block from Tendermint websocket`
-              )
-              tendermint.disconnect()
-              resolve()
-            }
-          )
-        })
-        .catch(error => {
-          errors.push(
-            `❌ Tendermint websocket not reachable: ${error}`
-          )
-          resolve()
-        })
-    }),
+    //       connectedClient.subscribe(
+    //         { query: "tm.event='NewBlock'" },
+    //         event => {
+    //           clearTimeout(timeout)
+    //           successes.push(
+    //             `✅ Received new block from Tendermint websocket`
+    //           )
+    //           tendermint.disconnect()
+    //           resolve()
+    //         }
+    //       )
+    //     })
+    //     .catch(error => {
+    //       errors.push(
+    //         `❌ Tendermint websocket not reachable: ${error}`
+    //       )
+    //       resolve()
+    //     })
+    // }),
     Promise.all(
       sdkRoutes.map(route => {
         return fetch(`${cosmosAPIUrl.trim('/')}${route}`).then(res => {
