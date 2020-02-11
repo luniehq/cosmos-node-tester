@@ -1,21 +1,19 @@
-const Tendermint = require('./tendermint')
 const fetch = require('node-fetch')
 
 // functions/hello.js
 exports.handler = async event => {
-  const rpc = event.queryStringParameters.rpc
   const api = event.queryStringParameters.api
 
-  if (!api || !rpc) {
+  if (!api) {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        errors: ['You need to provide rpc and api query parameters']
+        errors: ['You need to provide an "?api" query parameters']
       })
     }
   }
 
-  const {errors, successes} = await check(rpc, api)
+  const {errors, successes} = await check(api)
 
   return {
     statusCode: 200,
@@ -46,58 +44,23 @@ const sdkRoutes = [
   `/txs?tx.height=1`
 ]
 
-async function check (tendermintUrl, cosmosAPIUrl) {
+async function check (cosmosAPIUrl) {
   const errors = []
   const successes = []
 
-  const tendermint = Tendermint()
-
-  await Promise.all([
-    new Promise((resolve, reject) => {
-      tendermint
-        .connect(tendermintUrl)
-        .then(connectedClient => {
-          successes.push(`✅ Tendermint websocket reachable`)
-
-          const timeout = setTimeout(() => {
-            reject(
-              new Error(`❌ Timed out waiting for websocket on Tendermint`)
-            )
-          }, 10000)
-
-          connectedClient.subscribe(
-            { query: "tm.event='NewBlock'" },
-            event => {
-              clearTimeout(timeout)
-              successes.push(
-                `✅ Received new block from Tendermint websocket`
-              )
-              tendermint.disconnect()
-              resolve()
-            }
-          )
+  await Promise.all(
+    sdkRoutes.map(route => {
+      return fetch(`${cosmosAPIUrl.trim('/')}${route}`).then(res => {
+        if (res.status === 404) {
+          errors.push(`❌ Route ${route} not available`)
+        } else {
+          successes.push(`✅ Route ${route} is available!`)
+        }
+      })
+        .catch(() => {
+          errors.push(`❌ Route ${route} not available`)
         })
-        .catch(error => {
-          errors.push(
-            `❌ Tendermint websocket not reachable: ${error}`
-          )
-          resolve()
-        })
-    }),
-    Promise.all(
-      sdkRoutes.map(route => {
-        return fetch(`${cosmosAPIUrl.trim('/')}${route}`).then(res => {
-          if (res.status === 404) {
-            errors.push(`❌ Route ${route} not available`)
-          } else {
-            successes.push(`✅ Route ${route} is available!`)
-          }
-        })
-          .catch(() => {
-            errors.push(`❌ Route ${route} not available`)
-          })
-      }))
-  ])
+    }))
 
   return {errors, successes}
 }
